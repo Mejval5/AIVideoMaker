@@ -266,7 +266,7 @@ async function generateVideoFromTheme(theme : string) {
   folder = theme.replace(/[^a-zA-Z0-9]/g, "_");
 
   const response = await openai.createChatCompletion({
-    model: "gpt-4-1106-preview",
+    model: "gpt-4",
     messages: [
       {
         "role": "system",
@@ -410,7 +410,9 @@ async function createVideo() {
 
     console.log("creating video segment: " + i)
 
-    const cmd = `ffmpeg -loop 1 -i ${image} -i ${audioFile} -t ${duration} -filter_complex [0]scale=1024:-2,setsar=1:1[out];[out]crop=1024:1024[out];[out]scale=8000:-1,zoompan=z='zoom+0.001':x=${zoomPositionX}:y=${zoomPositionY}:d=${60*duration}:s=1024x1024:fps=60[out] -map [out] -map 1:a -c:v libx264 -c:a aac -b:a 192k -pix_fmt yuv420p -y ${tempSegmentPath}`;
+    const volume = "2.0"
+
+    const cmd = `ffmpeg -loop 1 -i ${image} -i ${audioFile} -t ${duration} -filter_complex [0]scale=1024:-2,setsar=1:1[out];[out]crop=1024:1024[out];[out]scale=8000:-1,zoompan=z='zoom+0.001':x=${zoomPositionX}:y=${zoomPositionY}:d=${60*duration}:s=1024x1024:fps=60[out];[1:a]volume=${volume}[aout] -map [out] -map [aout] -c:v libx264 -c:a aac -b:a 192k -pix_fmt yuv420p -y ${tempSegmentPath}`;
     await execAsync(cmd);
 
     tempSegments.push(tempSegmentPath);

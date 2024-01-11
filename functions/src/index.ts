@@ -266,7 +266,7 @@ async function generateVideoFromTheme(theme : string) {
   folder = theme.replace(/[^a-zA-Z0-9]/g, "_");
 
   const response = await openai.createChatCompletion({
-    model: "gpt-4",
+    model: "gpt-4-1106-preview",
     messages: [
       {
         "role": "system",
@@ -309,6 +309,8 @@ async function generateVideoFromTheme(theme : string) {
   audioNames = [];
 
   // run function for each item in content
+  const maxGenerationsPerMinute = 5
+  const delay = 60 / maxGenerationsPerMinute;
   for (let i = 0; i < parsedResponse.content.segments.length; i++) {
     const element = parsedResponse.content.segments[i];
 
@@ -320,6 +322,9 @@ async function generateVideoFromTheme(theme : string) {
     console.log("starting voice line with text: " + element.voice_acting);
     await createOneVoiceLine(element.voice_acting, element.time_start + ".mp3");
     audioNames[i] = element.time_start + ".mp3";
+
+    // wait to make sure we don't go over the limit
+    await new Promise(resolve => setTimeout(resolve, delay * 1000));
   }
 
   await createVideo();
@@ -531,7 +536,7 @@ async function createOneDalleImage(prompt:String, fileName:String) {
 
 async function createOneVoiceLine(text: string, fileName: string) {
     // URL to send the POST request
-    const url = secrets.voiceModelURL
+    const url = "https://api.elevenlabs.io/v1/text-to-speech/" + secrets.voiceModelID
 
     // Optional: Data to send in the POST request
     const postData = {
